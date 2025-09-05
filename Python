@@ -23,274 +23,163 @@ class VoiceInterviewBot:
         self.setup_voice_components()
     
     def setup_voice_components(self):
-        """Setup microphone and text-to-speech"""
+        """Setup microphone and text-to-speech."""
         try:
-            # Setup microphone
             self.microphone = sr.Microphone()
             print("✅ Microphone initialized")
             
-            # Setup text-to-speech
             self.tts_engine = pyttsx3.init()
-            
-            # Configure voice settings
             voices = self.tts_engine.getProperty('voices')
             if len(voices) > 1:
-                self.tts_engine.setProperty('voice', voices[1].id)  # Female voice
-            
+                self.tts_engine.setProperty('voice', voices[1].id)
             rate = self.tts_engine.getProperty('rate')
-            self.tts_engine.setProperty('rate', rate - 30)  # Slower speech
+            self.tts_engine.setProperty('rate', rate - 30)
             self.tts_engine.setProperty('volume', 0.9)
-            
             print("✅ Text-to-speech initialized")
             
-            # Calibrate microphone
-            print("🎙️  Calibrating microphone... (Please stay quiet for 2 seconds)")
+            print("🎙️  Calibrating microphone... (stay quiet)")
             with self.microphone as source:
                 self.recognizer.adjust_for_ambient_noise(source, duration=2)
             print("✅ Microphone calibrated")
             
         except Exception as e:
             print(f"⚠️  Voice setup warning: {e}")
-            print("💡 You can still use text input if voice fails")
+            print("💡 Falling back to text input if needed.")
     
     def speak(self, text):
-        """Convert text to speech"""
-        print(f"\n🤵 INTERVIEWER: {text}")
-        print("-" * 50)
-        
+        """Text-to-speech output."""
+        print(f"\n🤵 INTERVIEWER: {text}\n" + "-"*50)
         if self.tts_engine:
             try:
                 self.tts_engine.say(text)
                 self.tts_engine.runAndWait()
             except Exception as e:
                 print(f"⚠️  Speech error: {e}")
-        time.sleep(0.5)  # Brief pause
+        time.sleep(0.5)
     
     def listen_for_speech(self, timeout=20):
-        """Listen for speech input"""
+        """Speech-to-text input; fallback to text."""
         if not self.microphone:
             return self.get_text_input()
         
-        print("\n🎤 LISTENING... Please speak your answer now")
-        print("(Or press Ctrl+C to switch to text input)")
-        
+        print("\n🎤 LISTENING... speak now")
         try:
             with self.microphone as source:
-                # Listen with timeout
                 audio = self.recognizer.listen(source, timeout=timeout, phrase_time_limit=20)
-            
-            print("🔄 Processing your speech...")
-            
+            print("🔄 Processing speech...")
             try:
-                # Use Google Speech Recognition
                 text = self.recognizer.recognize_google(audio)
                 print(f"👤 YOU SAID: \"{text}\"")
                 return text
             except sr.UnknownValueError:
-                print("❌ Could not understand audio clearly")
-                return self.get_text_input("Please type your answer: ")
-            except sr.RequestError as e:
-                print(f"❌ Speech recognition service error: {e}")
-                return self.get_text_input("Please type your answer: ")
-                
-        except sr.WaitTimeoutError:
-            print("⏰ No speech detected. Switching to text input.")
-            return self.get_text_input("Please type your answer: ")
-        except KeyboardInterrupt:
-            print("\n⌨️  Switching to text input...")
-            return self.get_text_input("Please type your answer: ")
-        except Exception as e:
-            print(f"❌ Microphone error: {e}")
-            return self.get_text_input("Please type your answer: ")
+                return self.get_text_input("Couldn't understand—type your answer: ")
+            except sr.RequestError:
+                return self.get_text_input("Recognition service error—type your answer: ")
+        except (sr.WaitTimeoutError, KeyboardInterrupt):
+            return self.get_text_input("No speech—type your answer: ")
+        except Exception:
+            return self.get_text_input("Microphone error—type your answer: ")
     
     def get_text_input(self, prompt="Your answer: "):
-        """Get text input from keyboard"""
+        """Keyboard input fallback."""
         try:
             return input(f"\n⌨️  {prompt}").strip()
         except KeyboardInterrupt:
             return "quit"
     
     def get_ai_response(self, user_input):
-        """Get response from OpenRouter"""
+        """Call OpenRouter and return AI response."""
         self.conversation_history.append({"role": "user", "content": user_input})
-        
         payload = {
             "model": self.model,
             "messages": self.conversation_history,
             "temperature": 0.7,
-            "max_tokens": 450,
-            "top_p": 1
+            "max_tokens": 450
         }
-        
         headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "HTTP-Referer": "http://localhost:3000",
-            "X-Title": "Voice Interview Practice Bot",
             "Content-Type": "application/json"
         }
-        
         try:
             print("💭 AI is thinking...")
-            response = requests.post(self.base_url, headers=headers, json=payload, timeout=30)
-            
-            if response.status_code == 200:
-                ai_response = response.json()["choices"][0]["message"]["content"]
-                self.conversation_history.append({"role": "assistant", "content": ai_response})
-                return ai_response
+            resp = requests.post(self.base_url, headers=headers, json=payload, timeout=30)
+            if resp.status_code == 200:
+                ai_text = resp.json()["choices"][0]["message"]["content"]
+                self.conversation_history.append({"role": "assistant", "content": ai_text})
+                return ai_text
             else:
-                error_msg = f"API Error {response.status_code}: {response.text}"
-                print(f"❌ {error_msg}")
-                return f"Sorry, I'm having technical difficulties. Let's continue with the next question."
-                
-        except requests.exceptions.Timeout:
-            return "Sorry, the response is taking too long. Let's continue."
+                print(f"❌ API Error {resp.status_code}: {resp.text}")
+                return "Sorry, technical issues. Let's move on."
         except Exception as e:
             print(f"❌ Connection error: {e}")
-            return "I'm having connection issues, but let's continue with the interview."
+            return "Connection issue—continuing interview."
     
     def setup_interview(self, job_description, resume):
-        """Initialize the interview"""
+        """Initialize conversation with system prompt."""
         system_prompt = f"""
-You are a professional hiring manager conducting a job interview via voice/speech.
+You are a professional hiring manager conducting a job interview via voice.
 
 JOB DESCRIPTION:
 {job_description}
 
-CANDIDATE'S RESUME:
+CANDIDATE RESUME:
 {resume}
 
-INTERVIEW GUIDELINES:
-1. Speak conversationally and naturally (this will be read aloud)
-2. Ask 6-7 relevant questions based on the job requirements
-3. Focus on skills that match both the job description and resume
-4. Include a mix of:
-   - Technical questions about their experience
-   - Behavioral questions (use STAR method)
-   - Scenario-based questions
-5. After each answer, provide:
-   - Brief positive feedback (1-2 sentences)
-   - Constructive improvement suggestion
-   - Rating out of 10
-6. Keep responses concise but thorough
-7. End with overall assessment and next steps
+GUIDELINES:
+1. Ask 6–7 questions covering technical and behavioral topics.
+2. After each answer, give feedback, a rating out of 10, and improvement tips.
+3. Keep questions conversational and concise.
 
-Start with a warm, professional greeting and your first question.
+Start with a friendly greeting and first question.
 """
-        
         self.conversation_history = [{"role": "system", "content": system_prompt}]
         return self.get_ai_response("Please start the interview with your first question.")
     
     def run_interview(self):
-        """Main interview execution"""
-        print("\n" + "="*60)
-        print("🎯 VOICE-ENABLED AI INTERVIEW PRACTICE")
-        print("="*60)
+        """Main loop: gather details, conduct voice Q&A."""
+        print("\n" + "="*60 + "\n🎯 VOICE-ENABLED AI INTERVIEW PRACTICE\n" + "="*60)
+        self.speak("Hello! I'm your AI interviewer. Let's begin practice.")
         
-        # Test voice
-        self.speak("Hello! I'm your AI interviewer. Let's start your interview practice.")
+        jd = input("\n📋 Paste job description (or press Enter for sample):\n").strip() or (
+            "Senior Software Developer – 5+ years Python/JS, React, Node.js, AWS experience"
+        )
+        print("(Using sample job description)" if not jd else "")
         
-        # Get job description
-        print("\n📋 STEP 1: Job Description")
-        print("-" * 30)
-        job_description = input("Paste the job description here (or press Enter for sample): ").strip()
+        resume = input("\n📄 Paste your resume summary (or press Enter for sample):\n").strip() or (
+            "Alex Doe – 6 years full-stack dev with Python, React, AWS; led 4-person team"
+        )
+        print("(Using sample resume)" if not resume else "")
         
-        if not job_description:
-            job_description = """
-Senior Software Developer - Tech Company
-Requirements:
-- 5+ years experience in Python, JavaScript, and web development
-- Experience with React, Node.js, and database management
-- Strong problem-solving and communication skills
-- Experience with cloud platforms (AWS, Azure)
-- Leadership experience in agile development teams
-- Bachelor's degree in Computer Science or related field
-"""
-            print("ℹ️  Using sample job description")
+        # Start
+        ai_q = self.setup_interview(jd, resume)
+        self.speak(ai_q)
         
-        # Get resume
-        print("\n📄 STEP 2: Your Resume/Experience")
-        print("-" * 30)
-        resume = input("Paste your resume or key experience (or press Enter for sample): ").strip()
+        for i in range(1, 7):
+            print(f"\n{'='*40}\nQUESTION {i}/6\n{'='*40}")
+            ans = self.listen_for_speech()
+            if ans.lower() in ("quit","exit","stop"):
+                self.speak("Interview ended. Good luck!")
+                break
+            ai_resp = self.get_ai_response(ans)
+            self.speak(ai_resp)
+            time.sleep(1)
         
-        if not resume:
-            resume = """
-Sarah Johnson - Senior Software Developer
-Experience:
-- 6 years of full-stack development using Python and JavaScript
-- Built scalable web applications with React and Node.js
-- Managed PostgreSQL and MongoDB databases
-- Led development team of 4 in agile environment
-- Deployed applications on AWS EC2 and Lambda
-- Bachelor's in Computer Science, certifications in AWS
-"""
-            print("ℹ️  Using sample resume")
+        if len(self.conversation_history) > 1:
+            self.speak("Now, here's your final assessment.")
+            final = self.get_ai_response(
+                "Please provide a final assessment with strengths, improvements, and overall rating."
+            )
+            self.speak(final)
         
-        # Start interview
-        print("\n🎤 STARTING VOICE INTERVIEW...")
-        print("=" * 60)
-        
-        ai_response = self.setup_interview(job_description, resume)
-        self.speak(ai_response)
-        
-        question_count = 1
-        max_questions = 6
-        
-        try:
-            while question_count <= max_questions:
-                print(f"\n{'='*50}")
-                print(f"QUESTION {question_count} of {max_questions}")
-                print("="*50)
-                
-                # Get user response (voice or text)
-                user_answer = self.listen_for_speech()
-                
-                # Check for exit
-                if user_answer.lower() in ['quit', 'exit', 'end', 'stop interview']:
-                    self.speak("Thank you for the interview practice. Good luck with your real interviews!")
-                    break
-                
-                if not user_answer or len(user_answer.strip()) < 3:
-                    self.speak("I didn't get a clear answer. Let's try the next question.")
-                    continue
-                
-                # Get AI feedback
-                ai_response = self.get_ai_response(user_answer)
-                self.speak(ai_response)
-                
-                question_count += 1
-                
-                # Brief pause between questions
-                if question_count <= max_questions:
-                    time.sleep(2)
-            
-            # Final assessment
-            if question_count > max_questions:
-                print("\n🎯 FINAL ASSESSMENT")
-                print("=" * 50)
-                self.speak("Let me provide you with a comprehensive final assessment.")
-                
-                final_response = self.get_ai_response(
-                    "Please provide a detailed final assessment of the candidate's interview performance, including overall rating, strengths, areas for improvement, and specific recommendations for future interviews."
-                )
-                self.speak(final_response)
-        
-        except KeyboardInterrupt:
-            self.speak("Interview ended by user. Thank you for practicing!")
-        except Exception as e:
-            print(f"❌ Interview error: {e}")
-            self.speak("There was a technical issue, but thank you for the interview practice.")
-        
-        print("\n✅ INTERVIEW COMPLETED!")
-        print("💡 Review the feedback and practice the suggested improvements.")
-
+        print("\n✅ Interview complete! Review feedback and keep practicing.")
+    
 def main():
-    """Run the voice interview bot"""
     try:
         bot = VoiceInterviewBot()
         bot.run_interview()
     except Exception as e:
-        print(f"❌ Failed to start interview bot: {e}")
-        print("💡 Make sure all libraries are installed: pip install requests SpeechRecognition pyttsx3 pyaudio")
+        print(f"❌ Startup error: {e}")
+        print("💡 Ensure you installed: requests, SpeechRecognition, pyttsx3, pyaudio")
 
 if __name__ == "__main__":
     main()
