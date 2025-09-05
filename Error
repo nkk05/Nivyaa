@@ -1,0 +1,9 @@
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+Install the latest PowerShell for new features and improvements! https://aka.ms/PSWindows
+
+PS C:\Users\nivya\AppData\Local\Programs\Python\Python313> python API-Test.py
+401
+{"error":{"message":"User not found.","code":401}}
+PS C:\Users\nivya\AppData\Local\Programs\Python\Python313>
