@@ -1,1 +1,113 @@
+import requests
+import json
+
+class InterviewBot:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.base_url = "https://openrouter.ai/api/v1/chat/completions"
+        self.conversation_history = []
+    
+    def setup_interview(self, job_description, resume):
+        system_prompt = f"""
+        You are a professional hiring manager conducting a job interview.
+        
+        JOB DESCRIPTION:
+        {job_description}
+        
+        CANDIDATE'S RESUME:
+        {resume}
+        
+        CONDUCT A REALISTIC INTERVIEW:
+        1. Ask 5-7 relevant questions based on the job requirements
+        2. Focus on skills mentioned in both JD and resume
+        3. Include behavioral (STAR method) and technical questions
+        4. Provide constructive feedback after each answer
+        5. Rate responses on a scale of 1-10
+        6. End with final assessment and improvement suggestions
+        
+        Start with a welcoming introduction and your first question.
+        """
+        
+        self.conversation_history = [
+            {"role": "system", "content": system_prompt}
+        ]
+        
+        return self.get_ai_response("Please start the interview.")
+    
+    def get_ai_response(self, user_input):
+        self.conversation_history.append({"role": "user", "content": user_input})
+        
+        payload = {
+            "model": "deepseek/deepseek-r1:free",  # FREE MODEL
+            "messages": self.conversation_history,
+            "temperature": 0.7,
+            "max_tokens": 500
+        }
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        try:
+            response = requests.post(self.base_url, headers=headers, json=payload)
+            response.raise_for_status()
+            
+            ai_response = response.json()["choices"]["message"]["content"]
+            self.conversation_history.append({"role": "assistant", "content": ai_response})
+            
+            return ai_response
+        except requests.exceptions.RequestException as e:
+            return f"Error: {e}"
+    
+    def continue_interview(self, user_answer):
+        return self.get_ai_response(user_answer)
+
+# Usage Example
+def main():
+    # Your OpenRouter API key
+    API_KEY = "your_openrouter_api_key_here"
+    
+    # Sample data (replace with your own)
+    job_description = """
+    Software Developer Position
+    - 3+ years Python/JavaScript experience
+    - React, Node.js, databases (SQL/NoSQL)
+    - Problem-solving and teamwork skills
+    - Cloud platforms (AWS/Azure) preferred
+    """
+    
+    resume = """
+    John Doe - Software Developer
+    - 4 years Python development
+    - Built web apps with React/Node.js
+    - Experience with PostgreSQL, MongoDB
+    - Deployed applications on AWS
+    - Led team of 3 developers
+    """
+    
+    bot = InterviewBot(API_KEY)
+    
+    print("🎯 AI INTERVIEW PRACTICE STARTING...")
+    print("=" * 50)
+    
+    # Start interview
+    response = bot.setup_interview(job_description, resume)
+    print("INTERVIEWER:", response)
+    print("\n" + "=" * 50)
+    
+    # Interactive interview loop
+    while True:
+        user_input = input("\nYOUR ANSWER: ")
+        
+        if user_input.lower() in ['quit', 'exit', 'end']:
+            print("\n✅ Interview practice completed!")
+            break
+            
+        response = bot.continue_interview(user_input)
+        print("\nINTERVIEWER:", response)
+        print("\n" + "-" * 50)
+
+if __name__ == "__main__":
+    main()
 
