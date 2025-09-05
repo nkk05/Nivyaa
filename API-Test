@@ -1,0 +1,21 @@
+import requests
+import json
+
+API_KEY = "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"
+URL = "https://openrouter.ai/api/v1/chat/completions"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json"
+}
+
+payload = {
+    "model": "deepseek/deepseek-r1:free",
+    "messages": [
+        {"role": "user", "content": "ping"}
+    ]
+}
+
+response = requests.post(URL, headers=headers, json=payload)
+print(response.status_code)
+print(response.text)
