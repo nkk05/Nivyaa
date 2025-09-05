@@ -6,28 +6,27 @@ import time
 
 class VoiceInterviewBot:
     def __init__(self):
-        # Your OpenRouter API key (pre-configured)
-        self.api_key = "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"
-        self.model = "deepseek/deepseek-r1:free"  # Free model
+        # Your OpenRouter-issued key
+        self.api_key = "sk-or-v1-43d24a23fcbceabc011824c2ffc2db017efeb8bca2bd5a00058d8e36feb"
+        # Use your own OpenAI key via OpenRouter BYOK integration
+        self.model = "openai/gpt-3.5-turbo"
         self.base_url = "https://openrouter.ai/api/v1/chat/completions"
         self.conversation_history = []
-        
-        # Initialize speech recognition
+
+        # Initialize speech recognition and TTS
         self.recognizer = sr.Recognizer()
         self.microphone = None
-        
-        # Initialize text-to-speech
         self.tts_engine = None
-        
+
         print("🚀 Initializing Voice Interview Bot...")
         self.setup_voice_components()
-    
+
     def setup_voice_components(self):
         """Setup microphone and text-to-speech."""
         try:
             self.microphone = sr.Microphone()
             print("✅ Microphone initialized")
-            
+
             self.tts_engine = pyttsx3.init()
             voices = self.tts_engine.getProperty('voices')
             if len(voices) > 1:
@@ -36,18 +35,18 @@ class VoiceInterviewBot:
             self.tts_engine.setProperty('rate', rate - 30)
             self.tts_engine.setProperty('volume', 0.9)
             print("✅ Text-to-speech initialized")
-            
+
             print("🎙️  Calibrating microphone... (stay quiet)")
             with self.microphone as source:
                 self.recognizer.adjust_for_ambient_noise(source, duration=2)
             print("✅ Microphone calibrated")
-            
+
         except Exception as e:
             print(f"⚠️  Voice setup warning: {e}")
             print("💡 Falling back to text input if needed.")
-    
+
     def speak(self, text):
-        """Text-to-speech output."""
+        """Convert text to speech."""
         print(f"\n🤵 INTERVIEWER: {text}\n" + "-"*50)
         if self.tts_engine:
             try:
@@ -56,12 +55,11 @@ class VoiceInterviewBot:
             except Exception as e:
                 print(f"⚠️  Speech error: {e}")
         time.sleep(0.5)
-    
+
     def listen_for_speech(self, timeout=20):
-        """Speech-to-text input; fallback to text."""
+        """Listen for speech input; fallback to text if needed."""
         if not self.microphone:
             return self.get_text_input()
-        
         print("\n🎤 LISTENING... speak now")
         try:
             with self.microphone as source:
@@ -79,16 +77,16 @@ class VoiceInterviewBot:
             return self.get_text_input("No speech—type your answer: ")
         except Exception:
             return self.get_text_input("Microphone error—type your answer: ")
-    
+
     def get_text_input(self, prompt="Your answer: "):
-        """Keyboard input fallback."""
+        """Fallback to keyboard input."""
         try:
             return input(f"\n⌨️  {prompt}").strip()
         except KeyboardInterrupt:
             return "quit"
-    
+
     def get_ai_response(self, user_input):
-        """Call OpenRouter and return AI response."""
+        """Send the conversation to OpenRouter/OpenAI and receive response."""
         self.conversation_history.append({"role": "user", "content": user_input})
         payload = {
             "model": self.model,
@@ -113,9 +111,9 @@ class VoiceInterviewBot:
         except Exception as e:
             print(f"❌ Connection error: {e}")
             return "Connection issue—continuing interview."
-    
+
     def setup_interview(self, job_description, resume):
-        """Initialize conversation with system prompt."""
+        """Initialize the interview with a system prompt."""
         system_prompt = f"""
 You are a professional hiring manager conducting a job interview via voice.
 
@@ -134,45 +132,49 @@ Start with a friendly greeting and first question.
 """
         self.conversation_history = [{"role": "system", "content": system_prompt}]
         return self.get_ai_response("Please start the interview with your first question.")
-    
+
     def run_interview(self):
-        """Main loop: gather details, conduct voice Q&A."""
-        print("\n" + "="*60 + "\n🎯 VOICE-ENABLED AI INTERVIEW PRACTICE\n" + "="*60)
+        """Main interview loop gathering user info and conducting Q&A."""
+        print("\n" + "="*60)
+        print("🎯 VOICE-ENABLED AI INTERVIEW PRACTICE")
+        print("="*60)
+
         self.speak("Hello! I'm your AI interviewer. Let's begin practice.")
-        
+
         jd = input("\n📋 Paste job description (or press Enter for sample):\n").strip() or (
-            "Senior Software Developer – 5+ years Python/JS, React, Node.js, AWS experience"
+            "Senior Software Developer – 5+ years Python/JS, React, Node.js, AWS"
         )
-        print("(Using sample job description)" if not jd else "")
-        
+        if not jd:
+            print("(Using sample job description)")
+
         resume = input("\n📄 Paste your resume summary (or press Enter for sample):\n").strip() or (
-            "Alex Doe – 6 years full-stack dev with Python, React, AWS; led 4-person team"
+            "Alex Doe – 6 years full-stack development with Python, React, AWS; led team of 4"
         )
-        print("(Using sample resume)" if not resume else "")
-        
-        # Start
+        if not resume:
+            print("(Using sample resume)")
+
         ai_q = self.setup_interview(jd, resume)
         self.speak(ai_q)
-        
+
         for i in range(1, 7):
             print(f"\n{'='*40}\nQUESTION {i}/6\n{'='*40}")
             ans = self.listen_for_speech()
-            if ans.lower() in ("quit","exit","stop"):
+            if ans.lower() in ("quit", "exit", "stop"):
                 self.speak("Interview ended. Good luck!")
                 break
             ai_resp = self.get_ai_response(ans)
             self.speak(ai_resp)
             time.sleep(1)
-        
+
         if len(self.conversation_history) > 1:
             self.speak("Now, here's your final assessment.")
             final = self.get_ai_response(
                 "Please provide a final assessment with strengths, improvements, and overall rating."
             )
             self.speak(final)
-        
+
         print("\n✅ Interview complete! Review feedback and keep practicing.")
-    
+
 def main():
     try:
         bot = VoiceInterviewBot()
