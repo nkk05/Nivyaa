@@ -1,9 +1,44 @@
-Windows PowerShell
-Copyright (C) Microsoft Corporation. All rights reserved.
+PS C:\Users\nivya\AppData\Local\Programs\Python\Python313> python voice_interview_bot.py
+🚀 Initializing Voice Interview Bot...
+✅ Microphone initialized
+✅ Text-to-speech initialized
+🎙️  Calibrating microphone... (stay quiet)
+✅ Microphone calibrated
 
-Install the latest PowerShell for new features and improvements! https://aka.ms/PSWindows
+============================================================
+🎯 VOICE-ENABLED AI INTERVIEW PRACTICE
+============================================================
 
-PS C:\Users\nivya\AppData\Local\Programs\Python\Python313> python API-Test.py
-401
-{"error":{"message":"User not found.","code":401}}
-PS C:\Users\nivya\AppData\Local\Programs\Python\Python313>
+🤵 INTERVIEWER: Hello! I'm your AI interviewer. Let's begin practice.
+--------------------------------------------------
+
+📋 Paste job description (or press Enter for sample):
+As a software test engineer you are working with the other engineers on your agile team and the other agile teams in the same sub-domain. You work together with the System Engineers and Software Engineers on what to test and how. And on the implementation and automation of those tests. Since we are working with classified information, we require all employees to undergo a screening by the AIVD or MIVD (level B).
+
+
+📄 Paste your resume summary (or press Enter for sample):
+
+
+💭 AI is thinking...
+❌ API Error 429: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"deepseek/deepseek-r1:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Chutes"}},"user_id":"user_32GtJccbyF6WvuKfxmHsD0pS0ZJ"}
+
+🤵 INTERVIEWER: Sorry, technical issues. Let's move on.
+--------------------------------------------------
+
+========================================
+QUESTION 1/6
+========================================
+
+🎤 LISTENING... speak now
+🔄 Processing speech...
+
+⌨️  Couldn't understand—type your answer: You will work with the following tools and techniques:
+💭 AI is thinking...
+❌ API Error 429: {"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"deepseek/deepseek-r1:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations","provider_name":"Chutes"}},"user_id":"user_32GtJccbyF6WvuKfxmHsD0pS0ZJ"}
+
+🤵 INTERVIEWER: Sorry, technical issues. Let's move on.
+--------------------------------------------------
+
+========================================
+QUESTION 2/6
+========================================
