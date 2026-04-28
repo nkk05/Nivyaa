@@ -1,0 +1,60 @@
+PNTECHLABS.COM
+root
+Krittanya@123
+
+Hostinger
+ssh root@72.62.42.34
+
+Portainer
+admin
+Krittanya@123
+
+NGNIX
+name: admin
+email: nkprasaanth05@gmail.com
+pass: Success@123
+
+Airfow
+Nivyaa
+admin
+
+
+PG SQL
+user:admin
+password:Krittanya@123 , Krittanya123
+
+MINIO_ROOT_USER: admin
+MINIO_ROOT_PASSWORD: StrongPassword@123
+
+
+jupitor
+token:pntech123
+password: Krittanya@123
+
+Prometheus Time Series Collection and Processing Server
+http://prometheus.pntechlabs.com/targets
+
+Grafana
+https://grafana.pntechlabs.com/
+admin
+Krittanya@123
+
+n8n
+nkprasaanth05@gmail.com
+Krittanya@123
+
+
+https://hpanel.hostinger.com/vps/1147415/overview
+https://dash.cloudflare.com/login
+https://portainer.pntechlabs.com/#!/home
+
+https://jupyter.pntechlabs.com/lab
+https://airflow.pntechlabs.com/home
+https://console.pntechlabs.com/browser/nivyaa-data
+http://adminer.pntechlabs.com/?pgsql=postgres&username=admin&db=pntechdb&ns=public
+https://n8n.pntechlabs.com/workflow/
+https://grafana.pntechlabs.com/
+
+
+http://72.62.42.34:81/nginx/proxy
+http://72.62.42.34:9001/login --DAG
