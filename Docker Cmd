@@ -1,0 +1,41 @@
+Docker Command
+
+Docker --version
+Docker stats
+docker compose version
+mkdir -p /docker/portainer
+nano docker-compose.yml
+docker compose up -d
+docker stop portainer 
+docker ps
+docker network create homelab
+docker network ls
+docker ps | grep minio
+docker network connect homelab airflow-webserver
+docker logs airflow-webserver -f
+docker logs npm
+docker compose down 
+docker compose down --volumes --remove-orphans
+docker network disconnect homelab airflow-webserver || true
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' airflow-webserver
+docker inspect -f '{{json .NetworkSettings.Networks}}' airflow-webserver | jq
+Docker network ls
+docker network inspect homelab
+docker restart npm
+docker logs airflow-webserver --tail 200
+docker exec-it my_container /bin/bash
+docker exec -it airflow-webserver airflow users list
+docker logs airflow-webserver | grep "Listening on"
+chmod -R 777 /opt/airflow/postgres-data
+cp docker-compose.yml docker-compose.yml.bak
+docker exec -it airflow-webserver bash
+curl http://minio:9000
+docker run --rm -it --network homelab minio/mc:latest /bin/sh
+mc alias set myminio http://minio:9000 admin 'StrongPassword@123'
+mc ls myminio
+docker run --rm -it --network homelab minio/mc:latest mc ls myminio
+docker run --rm -it --network homelab minio/mc:latest mc ls myminio/nivya-data
+docker network inspect homelab | grep -i name -A3
+
+docker run --rm -it --network homelab alpine sh
+nslookup node_exporter
